@@ -227,7 +227,7 @@
       flex-wrap: wrap;
       justify-content: center;
       gap: 12px;
-      margin-top: 5px;
+      margin: 16px 0 6px 0;
     }
 
     .power-btn {
@@ -602,6 +602,11 @@
       </div>
     </section>
 
+    <section class="board-wrap">
+      <canvas id="game" width="900" height="900" aria-label="6 by 6 dot game board"></canvas>
+      <div id="toast" class="toast">Rectangle! Color cleared.</div>
+    </section>
+
     <section class="powerbar">
       <button id="singlePower" class="power-btn" type="button" aria-label="Single Remove" title="Single Remove (Double-tap dot)">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -638,11 +643,6 @@
         </svg>
         <span id="colorPowerBadge" class="power-badge">1</span>
       </button>
-    </section>
-
-    <section class="board-wrap">
-      <canvas id="game" width="900" height="900" aria-label="6 by 6 dot game board"></canvas>
-      <div id="toast" class="toast">Rectangle! Color cleared.</div>
     </section>
 
     <div class="hint">
