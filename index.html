@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dots Remade</title>
+  <style>
+    :root {
+      --bg1: #101426;
+      --bg2: #1d2540;
+      --panel: rgba(255,255,255,0.09);
+      --panel-border: rgba(255,255,255,0.16);
+      --text: #f6f3e9;
+      --muted: #b7bdd2;
+      --gold: #ffd166;
+    }
+
+    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 10%, rgba(255, 209, 102, 0.16), transparent 28%),
+        radial-gradient(circle at 85% 20%, rgba(17, 138, 178, 0.17), transparent 30%),
+        linear-gradient(145deg, var(--bg1), var(--bg2));
+      overflow: auto;
+    }
+
+    .shell {
+      width: min(96vw, 760px);
+      display: grid;
+      gap: 10px;
+      justify-items: center;
+      padding: 10px;
+    }
+
+    .topbar {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr auto auto auto auto;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 12px;
+      border: 1px solid var(--panel-border);
+      background: var(--panel);
+      backdrop-filter: blur(14px);
+      border-radius: 22px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.24);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(20px, 4vw, 34px);
+      line-height: 1;
+      letter-spacing: -0.05em;
+    }
+
+    .stat {
+      text-align: right;
+      min-width: 70px;
+    }
+
+    .label {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+    }
+
+    .value {
+      font-size: 26px;
+      line-height: 1.1;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .icon-btn {
+      width: 42px;
+      height: 42px;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      border: 1px solid var(--panel-border);
+      box-shadow: none;
+      transition: all 0.2s;
+    }
+
+    .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .icon-btn svg {
+      transition: transform 0.3s ease;
+    }
+
+    .icon-btn:hover svg {
+      transform: rotate(45deg);
+    }
+
+    .board-wrap {
+      position: relative;
+      width: min(92vw, 500px);
+      aspect-ratio: 1 / 1;
+      padding: 12px;
+      border-radius: 34px;
+      border: 1px solid var(--panel-border);
+      background: #ffffff;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 28px 90px rgba(0,0,0,0.36);
+      touch-action: none;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: 24px;
+      cursor: pointer;
+      background: #ffffff;
+      transition: background 0.3s ease;
+    }
+
+    .hint {
+      width: 100%;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 14px;
+      text-align: center;
+      padding: 0 10px;
+    }
+
+    .hint strong { color: var(--gold); }
+
+    button {
+      border: 0;
+      color: #161722;
+      background: var(--gold);
+      font-weight: 800;
+      border-radius: 999px;
+      padding: 10px 14px;
+      cursor: pointer;
+      box-shadow: 0 10px 30px rgba(255, 209, 102, 0.22);
+    }
+
+    button:active { transform: translateY(1px); }
+
+    button:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .powerbar {
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 5px;
+    }
+
+    .power-btn {
+      position: relative;
+      width: 60px;
+      height: 60px;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--panel-border);
+      backdrop-filter: blur(10px);
+      border-radius: 18px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      transition: all 0.2s ease;
+    }
+
+    .power-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .power-btn:active {
+      transform: translateY(1px);
+    }
+
+    .power-btn.active {
+      background: var(--gold);
+      color: #101426;
+      border-color: var(--gold);
+      box-shadow: 0 0 15px rgba(255, 209, 102, 0.4);
+    }
+
+    .power-badge {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: #e6194b;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 10px;
+      border: 1.5px solid var(--bg1);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      line-height: 1;
+    }
+
+    .toast {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) scale(.96);
+      padding: 12px 18px;
+      border-radius: 999px;
+      background: rgba(10,12,23,0.78);
+      color: #fff;
+      font-weight: 900;
+      letter-spacing: .02em;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease, transform .18s ease;
+      box-shadow: 0 14px 42px rgba(0,0,0,.34);
+      white-space: nowrap;
+    }
+
+    .toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+    /* Modal Styles */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(10, 12, 23, 0.6);
+      backdrop-filter: blur(8px);
+      display: grid;
+      place-items: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .modal.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-content {
+      width: min(90vw, 420px);
+      background: rgba(29, 37, 64, 0.95);
+      border: 1px solid var(--panel-border);
+      border-radius: 28px;
+      padding: 24px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
+      transform: scale(0.9);
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .modal.open .modal-content {
+      transform: scale(1);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -0.03em;
+    }
+
+    .close-btn {
+      background: none !important;
+      border: none !important;
+      color: var(--muted) !important;
+      font-size: 28px !important;
+      line-height: 1 !important;
+      padding: 0 !important;
+      box-shadow: none !important;
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+
+    .close-btn:hover {
+      color: #fff !important;
+    }
+
+    .section-label {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 12px;
+    }
+
+    .scheme-options {
+      display: grid;
+      gap: 12px;
+    }
+
+    .scheme-option {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .scheme-option:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .scheme-option.selected {
+      background: rgba(255, 209, 102, 0.15);
+      border-color: var(--gold);
+    }
+
+    .scheme-name {
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .scheme-preview {
+      display: flex;
+      gap: 6px;
+    }
+
+    .scheme-preview span {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    /* Toggle Switch styling */
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .setting-row .setting-label {
+      margin-bottom: 0;
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--text);
+      text-transform: none;
+      letter-spacing: normal;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.1);
+      transition: .2s;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .2s;
+    }
+
+    input:checked + .slider {
+      background-color: var(--gold);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(24px);
+      background-color: #101426;
+    }
+
+    .slider.round {
+      border-radius: 24px;
+    }
+
+    .slider.round:before {
+      border-radius: 50%;
+    }
+
+    .mode-options {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .mode-option {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 10px 4px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .mode-option:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .mode-option.selected {
+      background: rgba(255, 209, 102, 0.15);
+      border-color: var(--gold);
+    }
+
+    .mode-name {
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    /* Dark Mode Board styles */
+    body.dark-mode .board-wrap {
+      background: #131729;
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    body.dark-mode canvas {
+      background: #131729;
+    }
+
+    @media (max-width: 540px) {
+      .topbar { grid-template-columns: 1fr 1fr; }
+      h1 { grid-column: 1 / -1; }
+      .stat { text-align: left; }
+      .actions { grid-column: 1 / -1; justify-content: center; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="topbar">
+      <h1>Dots Remade</h1>
+      <div class="stat"><span class="label">Score</span><span id="score" class="value">0</span></div>
+      <div class="stat"><span id="movesLabel" class="label">Moves</span><span id="moves" class="value">30</span></div>
+      <div class="stat"><span class="label">Best</span><span id="best" class="value">0</span></div>
+      <div class="actions">
+        <button id="newGame">New Game</button>
+        <button id="openSettings" class="icon-btn" aria-label="Open Settings" title="Settings">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <section class="powerbar">
+      <button id="singlePower" class="power-btn" type="button" aria-label="Single Remove" title="Single Remove (Double-tap dot)">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10" stroke-dasharray="4 2"></circle>
+          <circle cx="12" cy="12" r="3.5" fill="currentColor"></circle>
+          <line x1="12" y1="2" x2="12" y2="6"></line>
+          <line x1="12" y1="18" x2="12" y2="22"></line>
+          <line x1="2" y1="12" x2="6" y2="12"></line>
+          <line x1="18" y1="12" x2="22" y2="12"></line>
+        </svg>
+        <span id="singlePowerBadge" class="power-badge">2</span>
+      </button>
+
+      <button id="shufflePower" class="power-btn" type="button" aria-label="Shuffle Board" title="Shuffle Board (Cost: 1 move)">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 3h5v5"></path>
+          <path d="M4 20L21 3"></path>
+          <path d="M21 16v5h-5"></path>
+          <path d="M15 15l6 6"></path>
+          <path d="M4 4l5 5"></path>
+        </svg>
+        <span id="shufflePowerBadge" class="power-badge">1</span>
+      </button>
+
+      <button id="colorPower" class="power-btn" type="button" aria-label="Clear Color" title="Clear Color (Remove all of one color)">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9" stroke-width="2.2"></circle>
+          <path d="M12 3v18" stroke-width="1.2"></path>
+          <path d="M3 12h18" stroke-width="1.2"></path>
+          <circle cx="7.5" cy="7.5" r="2.2" fill="#e6194b" stroke="none"></circle>
+          <circle cx="16.5" cy="7.5" r="2.2" fill="#ffe119" stroke="none"></circle>
+          <circle cx="7.5" cy="16.5" r="2.2" fill="#3cb44b" stroke="none"></circle>
+          <circle cx="16.5" cy="16.5" r="2.2" fill="#4363d8" stroke="none"></circle>
+        </svg>
+        <span id="colorPowerBadge" class="power-badge">1</span>
+      </button>
+    </section>
+
+    <section class="board-wrap">
+      <canvas id="game" width="900" height="900" aria-label="6 by 6 dot game board"></canvas>
+      <div id="toast" class="toast">Rectangle! Color cleared.</div>
+    </section>
+
+    <div class="hint">
+      You have <strong>30 moves</strong>. Drag through same-color dots in straight up/down/left/right steps. Rectangles clear that color. Powerups: double-tap/single-remove, shuffle, and clear-color.
+    </div>
+  </main>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Settings</h2>
+        <button id="closeSettings" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-row">
+          <span class="setting-label">Dark Mode Board</span>
+          <label class="switch">
+            <input type="checkbox" id="darkModeToggle">
+            <span class="slider round"></span>
+          </label>
+        </div>
+
+        <label class="section-label">Game Mode</label>
+        <div class="mode-options">
+          <div class="mode-option" data-mode="moves">
+            <span class="mode-name">Moves (30)</span>
+          </div>
+          <div class="mode-option" data-mode="timed">
+            <span class="mode-name">Timed (90s)</span>
+          </div>
+          <div class="mode-option" data-mode="endless">
+            <span class="mode-name">Endless</span>
+          </div>
+        </div>
+
+        <label class="section-label">Color Scheme</label>
+        <div class="scheme-options">
+          <div class="scheme-option" data-scheme="classic">
+            <span class="scheme-name">Classic</span>
+            <div class="scheme-preview">
+              <span style="background: #e6194b"></span>
+              <span style="background: #ffe119"></span>
+              <span style="background: #3cb44b"></span>
+              <span style="background: #4363d8"></span>
+              <span style="background: #911eb4"></span>
+            </div>
+          </div>
+          <div class="scheme-option" data-scheme="pastel">
+            <span class="scheme-name">Pastel</span>
+            <div class="scheme-preview">
+              <span style="background: #ff9999"></span>
+              <span style="background: #ffcc99"></span>
+              <span style="background: #99e6b3"></span>
+              <span style="background: #99ccff"></span>
+              <span style="background: #cc99ff"></span>
+            </div>
+          </div>
+          <div class="scheme-option" data-scheme="neon">
+            <span class="scheme-name">Neon</span>
+            <div class="scheme-preview">
+              <span style="background: #00f5d4"></span>
+              <span style="background: #ff007f"></span>
+              <span style="background: #7b2cbf"></span>
+              <span style="background: #39ff14"></span>
+              <span style="background: #ff5400"></span>
+            </div>
+          </div>
+          <div class="scheme-option" data-scheme="retro">
+            <span class="scheme-name">Retro</span>
+            <div class="scheme-preview">
+              <span style="background: #f72585"></span>
+              <span style="background: #f8961e"></span>
+              <span style="background: #f9c74f"></span>
+              <span style="background: #43aa8b"></span>
+              <span style="background: #277da1"></span>
+            </div>
+          </div>
+          <div class="scheme-option" data-scheme="highcontrast">
+            <span class="scheme-name">High Contrast</span>
+            <div class="scheme-preview">
+              <span style="background: #0022ff"></span>
+              <span style="background: #e60000"></span>
+              <span style="background: #008800"></span>
+              <span style="background: #8a00e6"></span>
+              <span style="background: #ff5500"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const GRID = 6;
+    const MAX_MOVES = 30;
+    const COLOR_SCHEMES = {
+      classic: [
+        { name: 'red',     fill: '#e6194b', glow: 'rgba(230,25,75,.44)' },
+        { name: 'yellow',  fill: '#ffe119', glow: 'rgba(255,225,25,.44)' },
+        { name: 'green',   fill: '#3cb44b', glow: 'rgba(60,180,75,.42)' },
+        { name: 'blue',    fill: '#4363d8', glow: 'rgba(67,99,216,.42)' },
+        { name: 'purple',  fill: '#911eb4', glow: 'rgba(145,30,180,.46)' },
+      ],
+      pastel: [
+        { name: 'pink',    fill: '#ff9999', glow: 'rgba(255,153,153,.44)' },
+        { name: 'peach',   fill: '#ffcc99', glow: 'rgba(255,204,153,.44)' },
+        { name: 'mint',    fill: '#99e6b3', glow: 'rgba(153,230,179,.42)' },
+        { name: 'sky',     fill: '#99ccff', glow: 'rgba(153,204,255,.42)' },
+        { name: 'lavender',fill: '#cc99ff', glow: 'rgba(204,153,255,.46)' },
+      ],
+      neon: [
+        { name: 'cyan',    fill: '#00f5d4', glow: 'rgba(0,245,212,.44)' },
+        { name: 'magenta', fill: '#ff007f', glow: 'rgba(255,0,127,.44)' },
+        { name: 'electric',fill: '#7b2cbf', glow: 'rgba(123,44,191,.46)' },
+        { name: 'lime',    fill: '#39ff14', glow: 'rgba(57,255,20,.42)' },
+        { name: 'tangerine',fill: '#ff5400', glow: 'rgba(255,84,0,.44)' },
+      ],
+      retro: [
+        { name: 'rose',    fill: '#f72585', glow: 'rgba(247,37,133,.44)' },
+        { name: 'pumpkin', fill: '#f8961e', glow: 'rgba(248,150,30,.44)' },
+        { name: 'canary',  fill: '#f9c74f', glow: 'rgba(249,199,79,.42)' },
+        { name: 'emerald', fill: '#43aa8b', glow: 'rgba(67,170,139,.42)' },
+        { name: 'teal',    fill: '#277da1', glow: 'rgba(39,125,161,.42)' },
+      ],
+      highcontrast: [
+        { name: 'blue',    fill: '#0022ff', glow: 'rgba(0,34,255,.5)' },
+        { name: 'red',     fill: '#e60000', glow: 'rgba(230,0,0,.5)' },
+        { name: 'green',   fill: '#008800', glow: 'rgba(0,136,0,.5)' },
+        { name: 'purple',  fill: '#8a00e6', glow: 'rgba(138,0,230,.5)' },
+        { name: 'orange',  fill: '#ff5500', glow: 'rgba(255,85,0,.5)' },
+      ]
+    };
+    let currentSchemeName = localStorage.getItem('dot-game-scheme') || 'classic';
+    let COLORS = COLOR_SCHEMES[currentSchemeName] || COLOR_SCHEMES.classic;
+
+    function getBestScoreKey(mode) {
+      if (mode === 'timed') return 'dots-remade-best-timed';
+      if (mode === 'endless') return 'dots-remade-best-endless';
+      return 'dots-remade-best-moves';
+    }
+
+    function loadBestScore(mode) {
+      const key = getBestScoreKey(mode);
+      if (mode === 'moves') {
+        return Number(localStorage.getItem(key) || localStorage.getItem('dots-remade-best') || localStorage.getItem('dot-rectangle-best') || 0);
+      }
+      return Number(localStorage.getItem(key) || 0);
+    }
+
+    let gameMode = localStorage.getItem('dot-game-mode') || 'moves';
+    let timeLeft = 90;
+    let timerInterval = null;
+    let timerStarted = false;
+    let best = loadBestScore(gameMode);
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score');
+    const movesEl = document.getElementById('moves');
+    const bestEl = document.getElementById('best');
+    const toast = document.getElementById('toast');
+    const newGameBtn = document.getElementById('newGame');
+    const singlePowerBtn = document.getElementById('singlePower');
+    const shufflePowerBtn = document.getElementById('shufflePower');
+    const colorPowerBtn = document.getElementById('colorPower');
+
+    let board = [];
+    let dots = [];
+    let selected = [];
+    let selectedKeySet = new Set();
+    let dragColor = null;
+    let isDragging = false;
+    let score = 0;
+    let movesLeft = MAX_MOVES;
+    let singleRemovesLeft = 2;
+    let shufflesLeft = 1;
+    let colorClearsLeft = 1;
+    let activePower = null;
+    let gameOver = false;
+    let lastTap = { time: 0, key: null };
+    let pointerMoved = false;
+    let cell = 0;
+    let pad = 0;
+    let radius = 0;
+    let pointer = null;
+    let removing = false;
+    let lastToastTimer = null;
+    let flashes = [];
+    let currentRectangleFlashKey = null;
+
+    class Dot {
+      constructor(row, col, color, spawnOffset = 0) {
+        this.row = row;
+        this.col = col;
+        this.color = color;
+        this.x = 0;
+        this.y = 0;
+        this.tx = 0;
+        this.ty = 0;
+        this.spawnOffset = spawnOffset;
+        this.scale = 1;
+        this.alpha = 1;
+        this.popping = false;
+        this.updateTarget(true);
+      }
+
+      updateTarget(jump = false) {
+        this.tx = pad + this.col * cell + cell / 2;
+        this.ty = pad + this.row * cell + cell / 2;
+        if (jump) {
+          this.x = this.tx;
+          this.y = this.ty - this.spawnOffset;
+        }
+      }
+
+      tick() {
+        const ease = this.popping ? 0.24 : 0.22;
+        this.x += (this.tx - this.x) * ease;
+        this.y += (this.ty - this.y) * ease;
+        if (this.popping) {
+          this.scale *= 0.78;
+          this.alpha *= 0.70;
+        } else {
+          this.scale += (1 - this.scale) * 0.18;
+          this.alpha += (1 - this.alpha) * 0.18;
+        }
+      }
+    }
+
+    function randomColor() {
+      return Math.floor(Math.random() * COLORS.length);
+    }
+
+    function init() {
+      board = [];
+      score = 0;
+      activePower = null;
+      gameOver = false;
+      lastTap = { time: 0, key: null };
+      flashes = [];
+      currentRectangleFlashKey = null;
+
+      clearInterval(timerInterval);
+      best = loadBestScore(gameMode);
+
+      timerStarted = false;
+      if (gameMode === 'moves') {
+        movesLeft = MAX_MOVES;
+      } else if (gameMode === 'timed') {
+        movesLeft = Infinity;
+        timeLeft = 90;
+      } else if (gameMode === 'endless') {
+        movesLeft = Infinity;
+      }
+
+      singleRemovesLeft = 2;
+      shufflesLeft = 1;
+      colorClearsLeft = 1;
+
+      for (let r = 0; r < GRID; r++) {
+        board[r] = [];
+        for (let c = 0; c < GRID; c++) {
+          board[r][c] = new Dot(r, c, randomColor());
+        }
+      }
+      rebuildDots();
+      clearSelection();
+      updateLayout();
+      dots.forEach(d => d.updateTarget(true));
+      updateStats();
+    }
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return m + ":" + (s < 10 ? "0" : "") + s;
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (gameOver || removing) return;
+        timeLeft--;
+        if (timeLeft <= 0) {
+          timeLeft = 0;
+          gameOver = true;
+          activePower = null;
+          showToast("Time's up! Final score: " + score);
+          clearInterval(timerInterval);
+        }
+        updateStats();
+      }, 1000);
+    }
+
+    function ensureTimerStarted() {
+      if (gameMode === 'timed' && !timerStarted && !gameOver) {
+        timerStarted = true;
+        startTimer();
+      }
+    }
+
+    function rebuildDots() {
+      dots = [];
+      for (let r = 0; r < GRID; r++) {
+        for (let c = 0; c < GRID; c++) if (board[r][c]) dots.push(board[r][c]);
+      }
+    }
+
+    function updateStats() {
+      scoreEl.textContent = score;
+      bestEl.textContent = best;
+
+      const movesLabel = document.getElementById('movesLabel');
+      if (gameMode === 'moves') {
+        if (movesLabel) movesLabel.textContent = 'Moves';
+        movesEl.textContent = movesLeft;
+      } else if (gameMode === 'timed') {
+        if (movesLabel) movesLabel.textContent = 'Time';
+        movesEl.textContent = formatTime(timeLeft);
+      } else if (gameMode === 'endless') {
+        if (movesLabel) movesLabel.textContent = 'Moves';
+        movesEl.textContent = '∞';
+      }
+
+      document.getElementById('singlePowerBadge').textContent = singleRemovesLeft;
+      document.getElementById('shufflePowerBadge').textContent = shufflesLeft;
+      document.getElementById('colorPowerBadge').textContent = colorClearsLeft;
+
+      const noMovesOrTime = (gameMode === 'moves' && movesLeft <= 0) || (gameMode === 'timed' && timeLeft <= 0);
+      singlePowerBtn.disabled = gameOver || singleRemovesLeft <= 0 || noMovesOrTime;
+      shufflePowerBtn.disabled = gameOver || shufflesLeft <= 0 || noMovesOrTime;
+      colorPowerBtn.disabled = gameOver || colorClearsLeft <= 0 || noMovesOrTime;
+      singlePowerBtn.classList.toggle('active', activePower === 'single');
+      colorPowerBtn.classList.toggle('active', activePower === 'color');
+    }
+
+    function spendMove() {
+      if (gameMode === 'timed' || gameMode === 'endless') {
+        updateStats();
+        return true;
+      }
+      if (movesLeft <= 0) return false;
+      movesLeft--;
+      if (movesLeft === 0) {
+        gameOver = true;
+        activePower = null;
+        showToast('Game over! Final score: ' + score);
+      }
+      updateStats();
+      return true;
+    }
+
+    function addScore(amount) {
+      score += amount;
+      if (score > best) {
+        best = score;
+        localStorage.setItem(getBestScoreKey(gameMode), best);
+        if (gameMode === 'moves') {
+          localStorage.setItem('dots-remade-best', best);
+        }
+      }
+      updateStats();
+    }
+
+    function updateLayout() {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const size = Math.min(rect.width, rect.height);
+      pad = size * 0.075;
+      cell = (size - pad * 2) / GRID;
+      radius = cell * 0.285;
+      dots.forEach(d => d.updateTarget(false));
+    }
+
+    function draw() {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      ctx.clearRect(0, 0, w, h);
+      dots.forEach(d => d.tick());
+      drawLines();
+      drawFlashes();
+      drawDots();
+      requestAnimationFrame(draw);
+    }
+
+    function drawGrid(w, h) {
+      ctx.save();
+      ctx.globalAlpha = .28;
+      ctx.strokeStyle = 'rgba(255,255,255,.22)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= GRID; i++) {
+        const p = pad + i * cell;
+        ctx.beginPath(); ctx.moveTo(p, pad); ctx.lineTo(p, h - pad); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(pad, p); ctx.lineTo(w - pad, p); ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawLines() {
+      if (selected.length === 0) return;
+      const color = COLORS[dragColor];
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = color.fill;
+      ctx.lineWidth = Math.max(8, radius * .56);
+      ctx.globalAlpha = .82;
+      ctx.beginPath();
+      selected.forEach((d, i) => i ? ctx.lineTo(d.x, d.y) : ctx.moveTo(d.x, d.y));
+      const loopClosed = selected.length >= 2 && selected[selected.length - 1] === selected[0];
+      if (isDragging && pointer && selected.length > 0 && !loopClosed) {
+        ctx.lineTo(pointer.x, pointer.y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function addRectangleFlash(colorIndex) {
+      if (selected.length < 4) return;
+      const rows = selected.map(d => d.row);
+      const cols = selected.map(d => d.col);
+      flashes.push({
+        minR: Math.min(...rows),
+        maxR: Math.max(...rows),
+        minC: Math.min(...cols),
+        maxC: Math.max(...cols),
+        color: colorIndex,
+        life: 1
+      });
+    }
+
+    function rectangleFlashKey() {
+      if (!selectionMakesRectangle()) return null;
+      const rows = selected.map(d => d.row);
+      const cols = selected.map(d => d.col);
+      return [Math.min(...rows), Math.max(...rows), Math.min(...cols), Math.max(...cols), dragColor].join(',');
+    }
+
+    function flashIfRectangleJustCompleted() {
+      const key = rectangleFlashKey();
+      if (key && key !== currentRectangleFlashKey) {
+        currentRectangleFlashKey = key;
+        addRectangleFlash(dragColor);
+      } else if (!key) {
+        currentRectangleFlashKey = null;
+      }
+    }
+
+    function drawFlashes() {
+      if (flashes.length === 0) return;
+      flashes = flashes.filter(f => f.life > 0.02);
+      for (const f of flashes) {
+        const inset = radius * .85 * (1 - f.life);
+        const x = pad + f.minC * cell + cell / 2 - radius - inset;
+        const y = pad + f.minR * cell + cell / 2 - radius - inset;
+        const w = (f.maxC - f.minC) * cell + radius * 2 + inset * 2;
+        const h = (f.maxR - f.minR) * cell + radius * 2 + inset * 2;
+        ctx.save();
+        ctx.globalAlpha = .28 * f.life;
+        ctx.fillStyle = COLORS[f.color].fill;
+        ctx.fillRect(x, y, w, h);
+        ctx.globalAlpha = .95 * f.life;
+        ctx.lineWidth = Math.max(5, radius * .35);
+        ctx.strokeStyle = '#ffffff';
+        ctx.strokeRect(x, y, w, h);
+        ctx.restore();
+        f.life *= .82;
+      }
+    }
+
+    function drawDots() {
+      const isBoxMade = selectionMakesRectangle();
+      const pulseVal = isBoxMade ? 1 + 0.08 * Math.sin(Date.now() / 120) : 1;
+
+      dots.forEach(d => {
+        const isSel = selectedKeySet.has(keyOf(d.row, d.col));
+        const c = COLORS[d.color];
+        let rr = radius * d.scale * (isSel ? 1.18 : 1);
+        if (isBoxMade && d.color === dragColor && !d.popping) {
+          rr *= pulseVal;
+        }
+
+        ctx.save();
+        ctx.globalAlpha = d.alpha * 0.38;
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.ellipse(d.x + rr * 0.12, d.y + rr * 0.20, rr * 0.92, rr * 0.82, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        ctx.save();
+        ctx.globalAlpha = d.alpha;
+        ctx.fillStyle = c.fill;
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = Math.max(1.8, rr * 0.08);
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, rr, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      });
+    }
+
+    function canvasPoint(evt) {
+      const rect = canvas.getBoundingClientRect();
+      const client = evt.touches ? evt.touches[0] : evt;
+      return { x: client.clientX - rect.left, y: client.clientY - rect.top };
+    }
+
+    function dotAtPoint(p) {
+      let bestDot = null;
+      let bestDist = Infinity;
+      for (const d of dots) {
+        if (d.popping) continue;
+        const dx = d.x - p.x;
+        const dy = d.y - p.y;
+        const dist = dx * dx + dy * dy;
+        if (dist < bestDist && dist < (radius * 1.45) ** 2) {
+          bestDist = dist;
+          bestDot = d;
+        }
+      }
+      return bestDot;
+    }
+
+    function keyOf(r, c) { return r + ',' + c; }
+
+    function areAdjacent(a, b) {
+      const dr = Math.abs(a.row - b.row);
+      const dc = Math.abs(a.col - b.col);
+      return dr + dc === 1;
+    }
+
+    function rebuildSelectedKeySet() {
+      selectedKeySet.clear();
+      selected.forEach(d => {
+        selectedKeySet.add(keyOf(d.row, d.col));
+      });
+    }
+
+    function tryAddDot(d) {
+      if (!d || removing || gameOver) return;
+      if (selected.length === 0) {
+        dragColor = d.color;
+        selected.push(d);
+        selectedKeySet.add(keyOf(d.row, d.col));
+        return;
+      }
+      if (d.color !== dragColor) return;
+
+      const last = selected[selected.length - 1];
+      if (!areAdjacent(last, d)) return;
+
+      const dKey = keyOf(d.row, d.col);
+      const prev = selected[selected.length - 2];
+
+      if (prev && prev === d) {
+        selected.pop();
+        rebuildSelectedKeySet();
+        flashIfRectangleJustCompleted();
+        return;
+      }
+
+      if (d === selected[0] && selected.length >= 4) {
+        if (last !== selected[0]) {
+          selected.push(d);
+          flashIfRectangleJustCompleted();
+        }
+        return;
+      }
+
+      const loopClosed = selected.length >= 2 && selected[selected.length - 1] === selected[0];
+      if (!loopClosed && !selectedKeySet.has(dKey)) {
+        selected.push(d);
+        selectedKeySet.add(dKey);
+        flashIfRectangleJustCompleted();
+      }
+    }
+
+    function clearSelection() {
+      selected = [];
+      selectedKeySet = new Set();
+      dragColor = null;
+      pointer = null;
+      isDragging = false;
+      pointerMoved = false;
+      currentRectangleFlashKey = null;
+    }
+
+    function setActivePower(power) {
+      if (gameOver || movesLeft <= 0) return;
+      activePower = activePower === power ? null : power;
+      updateStats();
+    }
+
+    function useSingleRemove(d) {
+      if (!d || singleRemovesLeft <= 0 || movesLeft <= 0 || gameOver || removing) return false;
+      singleRemovesLeft--;
+      activePower = null;
+      removeDots([d], false, true);
+      showToast('Single dot removed.');
+      return true;
+    }
+
+    function handleTapForSingleRemove(d) {
+      const now = Date.now();
+      const k = keyOf(d.row, d.col);
+      if (lastTap.key === k && now - lastTap.time < 340) {
+        lastTap = { time: 0, key: null };
+        return useSingleRemove(d);
+      }
+      lastTap = { time: now, key: k };
+      return false;
+    }
+
+    function useColorClear(d) {
+      if (!d || colorClearsLeft <= 0 || movesLeft <= 0 || gameOver || removing) return false;
+      colorClearsLeft--;
+      activePower = null;
+      dragColor = d.color;
+      const toRemove = dots.filter(dot => dot.color === d.color);
+      removeDots(toRemove, false, true);
+      showToast('Cleared all ' + COLORS[d.color].name + ' dots.');
+      return true;
+    }
+
+    function shuffleBoard() {
+      if (shufflesLeft <= 0 || gameOver || removing || movesLeft <= 0) return;
+      if (!spendMove()) return;
+      shufflesLeft--;
+      activePower = null;
+      const shuffled = dots.slice();
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      let idx = 0;
+      for (let r = 0; r < GRID; r++) {
+        for (let c = 0; c < GRID; c++) {
+          const d = shuffled[idx++];
+          d.row = r;
+          d.col = c;
+          d.popping = false;
+          d.scale = 1;
+          board[r][c] = d;
+          d.updateTarget(false);
+        }
+      }
+      rebuildDots();
+      clearSelection();
+      showToast('Board shuffled.');
+      updateStats();
+    }
+
+    function selectionMakesRectangle() {
+      if (selected.length < 5) return false;
+      if (selected[0] !== selected[selected.length - 1]) return false;
+
+      const uniqueSelected = selected.slice(0, -1);
+      const rows = uniqueSelected.map(d => d.row);
+      const cols = uniqueSelected.map(d => d.col);
+      const minR = Math.min(...rows), maxR = Math.max(...rows);
+      const minC = Math.min(...cols), maxC = Math.max(...cols);
+      if (minR === maxR || minC === maxC) return false;
+
+      const h = maxR - minR + 1;
+      const w = maxC - minC + 1;
+      const expectedPerimeterCount = 2 * h + 2 * w - 4;
+      if (uniqueSelected.length !== expectedPerimeterCount) return false;
+
+      for (let i = 0; i < uniqueSelected.length; i++) {
+        const current = uniqueSelected[i];
+        const next = uniqueSelected[(i + 1) % uniqueSelected.length];
+        if (!areAdjacent(current, next)) return false;
+        const onEdge = current.row === minR || current.row === maxR || current.col === minC || current.col === maxC;
+        if (!onEdge) return false;
+      }
+
+      const tempSet = new Set(uniqueSelected.map(d => keyOf(d.row, d.col)));
+      for (let r = minR; r <= maxR; r++) {
+        for (let c = minC; c <= maxC; c++) {
+          const onEdge = r === minR || r === maxR || c === minC || c === maxC;
+          if (onEdge && !tempSet.has(keyOf(r, c))) return false;
+        }
+      }
+      return true;
+    }
+
+    function finishSelection() {
+      if (gameOver || selected.length < 2) {
+        clearSelection();
+        return;
+      }
+      const rectangle = selectionMakesRectangle();
+      const color = dragColor;
+      let toRemove = rectangle ? dots.filter(d => d.color === color) : selected.slice();
+      removeDots(toRemove, rectangle, true);
+    }
+
+    function removeDots(toRemove, rectangle = false, countAsMove = true) {
+      if (gameOver || removing || toRemove.length === 0) return;
+      if (countAsMove && !spendMove()) return;
+      removing = true;
+      const removeKeys = new Set(toRemove.map(d => keyOf(d.row, d.col)));
+      toRemove.forEach(d => d.popping = true);
+      addScore(toRemove.length);
+
+      setTimeout(() => {
+        for (let r = 0; r < GRID; r++) {
+          for (let c = 0; c < GRID; c++) {
+            if (removeKeys.has(keyOf(r, c))) board[r][c] = null;
+          }
+        }
+        collapseAndRefill();
+        clearSelection();
+        removing = false;
+      }, 180);
+    }
+
+    function collapseAndRefill() {
+      for (let c = 0; c < GRID; c++) {
+        const survivors = [];
+        for (let r = GRID - 1; r >= 0; r--) if (board[r][c]) survivors.push(board[r][c]);
+        for (let r = GRID - 1; r >= 0; r--) {
+          const existing = survivors.shift();
+          const d = existing || new Dot(r, c, randomColor(), cell * (GRID + 1));
+          d.row = r;
+          d.col = c;
+          d.popping = false;
+          d.scale = existing ? 1 : 0;
+          board[r][c] = d;
+          d.updateTarget(!existing);
+        }
+      }
+      rebuildDots();
+    }
+
+    function showToast(text) {
+      toast.textContent = text;
+      toast.classList.add('show');
+      clearTimeout(lastToastTimer);
+      lastToastTimer = setTimeout(() => toast.classList.remove('show'), 1050);
+    }
+
+    function startDrag(evt) {
+      evt.preventDefault();
+      if (removing || gameOver) return;
+      pointer = canvasPoint(evt);
+      const d = dotAtPoint(pointer);
+      if (d) {
+        ensureTimerStarted();
+      }
+
+      if (activePower === 'single') {
+        useSingleRemove(d);
+        clearSelection();
+        return;
+      }
+      if (activePower === 'color') {
+        useColorClear(d);
+        clearSelection();
+        return;
+      }
+
+      clearSelection();
+      pointer = canvasPoint(evt);
+      pointerMoved = false;
+      isDragging = true;
+      tryAddDot(d);
+    }
+
+    function moveDrag(evt) {
+      if (!isDragging || removing || gameOver) return;
+      evt.preventDefault();
+      const nextPointer = canvasPoint(evt);
+      if (pointer) {
+        const dx = nextPointer.x - pointer.x;
+        const dy = nextPointer.y - pointer.y;
+        if ((dx * dx + dy * dy) > 16) pointerMoved = true;
+      }
+      pointer = nextPointer;
+      tryAddDot(dotAtPoint(pointer));
+    }
+
+    function endDrag(evt) {
+      if (!isDragging) return;
+      evt.preventDefault();
+      if (selected.length === 1 && !pointerMoved && handleTapForSingleRemove(selected[0])) {
+        clearSelection();
+        return;
+      }
+      finishSelection();
+    }
+
+    canvas.addEventListener('mousedown', startDrag);
+    canvas.addEventListener('mousemove', moveDrag);
+    window.addEventListener('mouseup', endDrag);
+    canvas.addEventListener('touchstart', startDrag, { passive: false });
+    canvas.addEventListener('touchmove', moveDrag, { passive: false });
+    window.addEventListener('touchend', endDrag, { passive: false });
+    newGameBtn.addEventListener('click', init);
+    singlePowerBtn.addEventListener('click', () => setActivePower('single'));
+    shufflePowerBtn.addEventListener('click', shuffleBoard);
+    colorPowerBtn.addEventListener('click', () => setActivePower('color'));
+    window.addEventListener('resize', updateLayout);
+
+    // Settings listeners
+    const settingsModal = document.getElementById('settingsModal');
+    const openSettingsBtn = document.getElementById('openSettings');
+    const closeSettingsBtn = document.getElementById('closeSettings');
+    const schemeOptions = document.querySelectorAll('.scheme-option');
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const modeOptions = document.querySelectorAll('.mode-option');
+
+    // Load Dark Mode Preference
+    const isDark = localStorage.getItem('dot-game-dark') === 'true';
+    if (isDark) {
+      document.body.classList.add('dark-mode');
+      darkModeToggle.checked = true;
+    }
+
+    darkModeToggle.addEventListener('change', () => {
+      if (darkModeToggle.checked) {
+        document.body.classList.add('dark-mode');
+        localStorage.setItem('dot-game-dark', 'true');
+      } else {
+        document.body.classList.remove('dark-mode');
+        localStorage.setItem('dot-game-dark', 'false');
+      }
+    });
+
+    openSettingsBtn.addEventListener('click', () => {
+      schemeOptions.forEach(opt => {
+        opt.classList.toggle('selected', opt.dataset.scheme === currentSchemeName);
+      });
+      modeOptions.forEach(opt => {
+        opt.classList.toggle('selected', opt.dataset.mode === gameMode);
+      });
+      settingsModal.classList.add('open');
+    });
+
+    closeSettingsBtn.addEventListener('click', () => {
+      settingsModal.classList.remove('open');
+    });
+
+    settingsModal.addEventListener('click', (e) => {
+      if (e.target === settingsModal) {
+        settingsModal.classList.remove('open');
+      }
+    });
+
+    schemeOptions.forEach(opt => {
+      opt.addEventListener('click', () => {
+        const scheme = opt.dataset.scheme;
+        if (COLOR_SCHEMES[scheme]) {
+          currentSchemeName = scheme;
+          localStorage.setItem('dot-game-scheme', scheme);
+          COLORS = COLOR_SCHEMES[scheme];
+          updateLayout();
+          updateStats();
+          schemeOptions.forEach(o => o.classList.toggle('selected', o.dataset.scheme === scheme));
+        }
+      });
+    });
+
+    modeOptions.forEach(opt => {
+      opt.addEventListener('click', () => {
+        const mode = opt.dataset.mode;
+        if (['moves', 'timed', 'endless'].includes(mode)) {
+          gameMode = mode;
+          localStorage.setItem('dot-game-mode', mode);
+          init();
+          modeOptions.forEach(o => o.classList.toggle('selected', o.dataset.mode === mode));
+        }
+      });
+    });
+
+    bestEl.textContent = best;
+    init();
+    requestAnimationFrame(draw);
+  </script>
+</body>
+</html>
