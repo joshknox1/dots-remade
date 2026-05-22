@@ -831,6 +831,7 @@
     let removing = false;
     let lastToastTimer = null;
     let flashes = [];
+    let sparkles = [];
     let currentRectangleFlashKey = null;
 
     class Dot {
@@ -883,6 +884,7 @@
       gameOver = false;
       lastTap = { time: 0, key: null };
       flashes = [];
+      sparkles = [];
       currentRectangleFlashKey = null;
 
       clearInterval(timerInterval);
@@ -1028,6 +1030,7 @@
       drawLines();
       drawFlashes();
       drawDots();
+      updateAndDrawSparkles();
       requestAnimationFrame(draw);
     }
 
@@ -1138,31 +1141,78 @@
         ctx.fill();
         ctx.restore();
 
-        // Draw bright outer glow if it is matching box color
-        if (isMatchingBoxColor) {
-          ctx.save();
-          ctx.globalAlpha = d.alpha * 0.85;
-          // Staggered sine wave shimmer animation across dots
-          const shimmer = 0.12 * Math.sin(Date.now() / 80 + d.row * 0.5 + d.col * 0.5);
-          const glowRadius = rr * (1.95 + shimmer);
-          const grad = ctx.createRadialGradient(d.x, d.y, rr * 0.4, d.x, d.y, glowRadius);
-          grad.addColorStop(0, '#ffffff');
-          grad.addColorStop(0.25, c.fill);
-          grad.addColorStop(0.6, c.fill);
-          grad.addColorStop(1, c.fill + '00'); // Fade to transparent color hue
-          ctx.fillStyle = grad;
-          ctx.beginPath();
-          ctx.arc(d.x, d.y, glowRadius, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
-        }
-
         // Draw solid core
         ctx.save();
         ctx.globalAlpha = d.alpha;
         ctx.fillStyle = c.fill;
         ctx.beginPath();
         ctx.arc(d.x, d.y, rr, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+    }
+
+    function updateAndDrawSparkles() {
+      // If a box is made, spawn sparkles around matching dots
+      const isBoxMade = selectionMakesRectangle();
+      if (isBoxMade && dragColor !== null) {
+        dots.forEach(d => {
+          if (d.color === dragColor && !d.popping && d.alpha > 0.5) {
+            // Spawn chance: 15% per frame per dot for active sparkles
+            if (Math.random() < 0.15) {
+              const angle = Math.random() * Math.PI * 2;
+              const dist = Math.random() * radius * 1.2;
+              sparkles.push({
+                x: d.x + Math.cos(angle) * dist,
+                y: d.y + Math.sin(angle) * dist,
+                vx: (Math.random() - 0.5) * 0.5,
+                vy: (Math.random() - 0.5) * 0.5 - 0.4, // subtle upward drift
+                size: 0,
+                maxSize: 3 + Math.random() * 6,
+                alpha: 1.0,
+                decay: 0.02 + Math.random() * 0.03,
+                rotation: Math.random() * Math.PI,
+                rotSpeed: (Math.random() - 0.5) * 0.15,
+                // Bright whites and soft gold sparkles
+                color: Math.random() < 0.35 ? '#ffffff' : (Math.random() < 0.5 ? '#ffd166' : '#fff5d1')
+              });
+            }
+          }
+        });
+      }
+
+      // Update and draw sparkles
+      sparkles = sparkles.filter(s => s.alpha > 0.05);
+      sparkles.forEach(s => {
+        s.x += s.vx;
+        s.y += s.vy;
+        s.rotation += s.rotSpeed;
+        
+        // Linear scale grow
+        if (s.size < s.maxSize && s.alpha > 0.3) {
+          s.size += (s.maxSize - s.size) * 0.25;
+        }
+        s.alpha -= s.decay;
+
+        ctx.save();
+        ctx.globalAlpha = s.alpha;
+        ctx.fillStyle = s.color;
+        
+        // Soft drop shadow for sparkles to make them pop on light background
+        ctx.shadowBlur = 4;
+        ctx.shadowColor = 'rgba(0,0,0,0.15)';
+        
+        ctx.translate(s.x, s.y);
+        ctx.rotate(s.rotation);
+        
+        // Draw 4-pointed sparkle
+        ctx.beginPath();
+        ctx.moveTo(0, -s.size);
+        ctx.quadraticCurveTo(0, 0, s.size, 0);
+        ctx.quadraticCurveTo(0, 0, 0, s.size);
+        ctx.quadraticCurveTo(0, 0, -s.size, 0);
+        ctx.quadraticCurveTo(0, 0, 0, -s.size);
+        ctx.closePath();
         ctx.fill();
         ctx.restore();
       });
@@ -1221,7 +1271,6 @@
         dragColor = d.color;
         selected.push(d);
         selectedKeySet.add(keyOf(d.row, d.col));
-        triggerVibration(12);
         return;
       }
       if (d.color !== dragColor) return;
