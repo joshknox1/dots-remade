@@ -1118,16 +1118,18 @@
 
     function drawDots() {
       const isBoxMade = selectionMakesRectangle();
-      const pulseVal = isBoxMade ? 1 + 0.08 * Math.sin(Date.now() / 120) : 1;
 
       dots.forEach(d => {
         const isSel = selectedKeySet.has(keyOf(d.row, d.col));
         const c = COLORS[d.color];
         let rr = radius * d.scale * (isSel ? 1.18 : 1);
-        if (isBoxMade && d.color === dragColor && !d.popping) {
-          rr *= pulseVal;
+        
+        const isMatchingBoxColor = isBoxMade && d.color === dragColor && !d.popping;
+        if (isMatchingBoxColor) {
+          rr *= 1.25; // Grow slightly
         }
 
+        // Draw shadow first
         ctx.save();
         ctx.globalAlpha = d.alpha * 0.38;
         ctx.fillStyle = '#000000';
@@ -1136,6 +1138,26 @@
         ctx.fill();
         ctx.restore();
 
+        // Draw bright outer glow if it is matching box color
+        if (isMatchingBoxColor) {
+          ctx.save();
+          ctx.globalAlpha = d.alpha * 0.85;
+          // Staggered sine wave shimmer animation across dots
+          const shimmer = 0.12 * Math.sin(Date.now() / 80 + d.row * 0.5 + d.col * 0.5);
+          const glowRadius = rr * (1.95 + shimmer);
+          const grad = ctx.createRadialGradient(d.x, d.y, rr * 0.4, d.x, d.y, glowRadius);
+          grad.addColorStop(0, '#ffffff');
+          grad.addColorStop(0.25, c.fill);
+          grad.addColorStop(0.6, c.fill);
+          grad.addColorStop(1, c.fill + '00'); // Fade to transparent color hue
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(d.x, d.y, glowRadius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        // Draw solid core
         ctx.save();
         ctx.globalAlpha = d.alpha;
         ctx.fillStyle = c.fill;
@@ -1183,12 +1205,23 @@
       });
     }
 
+    function triggerVibration(duration = 15) {
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        try {
+          navigator.vibrate(duration);
+        } catch (e) {
+          // Safe fallback for desktop or security policies
+        }
+      }
+    }
+
     function tryAddDot(d) {
       if (!d || removing || gameOver) return;
       if (selected.length === 0) {
         dragColor = d.color;
         selected.push(d);
         selectedKeySet.add(keyOf(d.row, d.col));
+        triggerVibration(12);
         return;
       }
       if (d.color !== dragColor) return;
@@ -1203,6 +1236,7 @@
         selected.pop();
         rebuildSelectedKeySet();
         flashIfRectangleJustCompleted();
+        triggerVibration(8); // Shorter click when backtracking
         return;
       }
 
@@ -1210,6 +1244,7 @@
         if (last !== selected[0]) {
           selected.push(d);
           flashIfRectangleJustCompleted();
+          triggerVibration(25); // Stronger click when closing loop
         }
         return;
       }
@@ -1219,6 +1254,7 @@
         selected.push(d);
         selectedKeySet.add(dKey);
         flashIfRectangleJustCompleted();
+        triggerVibration(12);
       }
     }
 
