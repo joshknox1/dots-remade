@@ -20,10 +20,12 @@ for (const file of entrypoints) {
     const html = fs.readFileSync(path.join(repoRoot, file), 'utf8');
 
     assert.match(html, /<section class="play-card">/, 'topbar and board should be wrapped by one play card');
-    assert.match(html, /\.play-card\s*{[\s\S]*?width:\s*min\(98vw,\s*720px\)/, 'play card should use a wider screen footprint');
+    assert.match(html, /\.play-card\s*{[\s\S]*?width:\s*min\(99vw,\s*780px\)/, 'play card should use more of the screen');
     assert.match(html, /\.topbar\s*{[\s\S]*?border:\s*0;/, 'topbar should not be its own bordered card');
     assert.match(html, /\.topbar\s*{[\s\S]*?box-shadow:\s*none;/, 'topbar should not cast its own shadow');
-    assert.match(html, /\.board-wrap\s*{[\s\S]*?width:\s*100%;/, 'board should fill the unified card width');
-    assert.match(html, /\.board-wrap\s*{[\s\S]*?max-width:\s*680px;/, 'board should be allowed to grow larger than before');
+    assert.match(html, /h1\.logo\s*{[\s\S]*?padding-left:\s*clamp\(14px,\s*4vw,\s*34px\);/, 'Dots title should be nudged right');
+    assert.match(html, /\.board-wrap\s*{[\s\S]*?width:\s*calc\(100%\s*\+\s*12px\);/, 'board should intentionally overflow card padding for a larger feel');
+    assert.match(html, /\.board-wrap\s*{[\s\S]*?max-width:\s*748px;/, 'board should be allowed to grow larger than before');
+    assert.match(html, /\.board-wrap\s*{[\s\S]*?justify-self:\s*center;/, 'board should stay centered in the unified card');
   });
 }
