@@ -96,16 +96,16 @@
     .label {
       display: block;
       color: var(--muted);
-      font-size: 10px;
+      font-size: 12px;
       text-transform: uppercase;
       letter-spacing: .08em;
-      font-weight: 700;
-      margin-bottom: 2px;
+      font-weight: 800;
+      margin-bottom: 3px;
     }
 
     .value {
-      font-size: 22px;
-      line-height: 1.1;
+      font-size: 30px;
+      line-height: 1.05;
       font-weight: 900;
       font-variant-numeric: tabular-nums;
       color: var(--text);
@@ -559,12 +559,12 @@
         min-width: 0;
       }
       .stat .label {
-        font-size: 8px;
-        letter-spacing: 0.05em;
+        font-size: 10px;
+        letter-spacing: 0.06em;
         margin-bottom: 0;
       }
       .stat .value {
-        font-size: 16px;
+        font-size: 22px;
       }
       .actions {
         grid-column: 3 / 4;
@@ -675,7 +675,7 @@
             <span class="mode-name">Moves (30)</span>
           </div>
           <div class="mode-option" data-mode="timed">
-            <span class="mode-name">Timed (90s)</span>
+            <span class="mode-name">Timed (60s)</span>
           </div>
           <div class="mode-option" data-mode="endless">
             <span class="mode-name">Endless</span>
@@ -797,7 +797,7 @@
     }
 
     let gameMode = localStorage.getItem('dot-game-mode') || 'moves';
-    let timeLeft = 90;
+    let timeLeft = 60;
     let timerInterval = null;
     let timerStarted = false;
     let best = loadBestScore(gameMode);
@@ -917,7 +917,7 @@
         movesLeft = MAX_MOVES;
       } else if (gameMode === 'timed') {
         movesLeft = Infinity;
-        timeLeft = 90;
+        timeLeft = 60;
       } else if (gameMode === 'endless') {
         movesLeft = Infinity;
       }
@@ -1150,14 +1150,6 @@
         const c = COLORS[d.color];
         const rr = radius * d.scale * (isSel ? 1.18 : 1);
 
-        // Draw shadow first
-        ctx.save();
-        ctx.globalAlpha = d.alpha * 0.38;
-        ctx.fillStyle = '#000000';
-        ctx.beginPath();
-        ctx.ellipse(d.x + rr * 0.12, d.y + rr * 0.20, rr * 0.92, rr * 0.82, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
 
         // Draw solid core
         ctx.save();

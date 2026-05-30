@@ -6,11 +6,11 @@ A beautiful, premium browser-playable 6x6 dot connection game with multiple mode
 - **Rebranded Experience**: A clean, glassmorphic UI styled with smooth transitions.
 - **Multiple Game Modes**:
   - **Moves Mode**: Classic gameplay with a 30-move limit.
-  - **Timed Mode**: 90-second countdown. To let you plan, the timer remains paused until you touch your first dot!
+  - **Timed Mode**: 60-second countdown. To let you plan, the timer remains paused until you touch your first dot!
   - **Endless Mode**: Play for as long as you want without limits.
 - **Dark Mode**: Toggle between a standard Light theme and a premium dark-navy board background.
 - **High Contrast Palette**: A dedicated accessibility color scheme to ensure dots are easily distinguishable.
-- **Refined Aesthetics**: Added crisp black vector outlines and drop-shadows to dots for excellent visibility.
+- **Refined Aesthetics**: Clean flat dots with no drop-shadow.
 - **Touch & Powerup Icons**: Pure SVG icons for game powerups:
   - **Single Remove (2x)**: Tap a dot to clear it.
   - **Shuffle (1x)**: Shuffle the board layout.
