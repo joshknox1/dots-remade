@@ -524,6 +524,59 @@
       font-size: 13px;
     }
 
+
+
+    /* Classic Feel: flatter, quieter original-Dots-inspired presentation */
+    body.classic-feel {
+      background: #ffffff;
+    }
+
+    body.classic-feel .shell {
+      gap: 8px;
+      padding: 10px;
+    }
+
+    body.classic-feel .topbar {
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      padding: 10px 12px 4px;
+    }
+
+    body.classic-feel .board-wrap {
+      background: #ffffff;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      padding: 4px;
+    }
+
+    body.classic-feel canvas {
+      background: #ffffff;
+      border-radius: 0;
+    }
+
+    body.classic-feel .hint {
+      opacity: 0.42;
+      font-size: 12px;
+      max-width: 500px;
+    }
+
+    body.classic-feel .power-btn {
+      background: transparent;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 50%;
+      box-shadow: none;
+      color: var(--muted);
+    }
+
+    body.classic-feel .power-btn.active {
+      background: rgba(93, 189, 182, 0.12);
+      color: var(--text);
+      box-shadow: none;
+    }
+
     /* Dark Mode Board styles */
     body.dark-mode .board-wrap {
       background: #131729;
@@ -662,6 +715,14 @@
           <span class="setting-label">Dark Mode Board</span>
           <label class="switch">
             <input type="checkbox" id="darkModeToggle">
+            <span class="slider round"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <span class="setting-label">Classic Feel</span>
+          <label class="switch">
+            <input type="checkbox" id="classicFeelToggle">
             <span class="slider round"></span>
           </label>
         </div>
@@ -1532,6 +1593,7 @@
     const closeSettingsBtn = document.getElementById('closeSettings');
     const schemeOptions = document.querySelectorAll('.scheme-option');
     const darkModeToggle = document.getElementById('darkModeToggle');
+    const classicFeelToggle = document.getElementById('classicFeelToggle');
     const modeOptions = document.querySelectorAll('.mode-option');
 
     // Load Dark Mode Preference
@@ -1541,6 +1603,12 @@
       darkModeToggle.checked = true;
     }
 
+    const isClassicFeel = localStorage.getItem('dot-game-classic-feel') === 'true';
+    if (isClassicFeel) {
+      document.body.classList.add('classic-feel');
+      classicFeelToggle.checked = true;
+    }
+
     darkModeToggle.addEventListener('change', () => {
       if (darkModeToggle.checked) {
         document.body.classList.add('dark-mode');
@@ -1548,6 +1616,16 @@
       } else {
         document.body.classList.remove('dark-mode');
         localStorage.setItem('dot-game-dark', 'false');
+      }
+    });
+
+    classicFeelToggle.addEventListener('change', () => {
+      if (classicFeelToggle.checked) {
+        document.body.classList.add('classic-feel');
+        localStorage.setItem('dot-game-classic-feel', 'true');
+      } else {
+        document.body.classList.remove('classic-feel');
+        localStorage.setItem('dot-game-classic-feel', 'false');
       }
     });
 
