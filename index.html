@@ -918,8 +918,11 @@
       }
     }
 
-    function randomColor() {
-      return Math.floor(Math.random() * COLORS.length);
+    function randomColor(exclude = -1) {
+      if (exclude < 0 || COLORS.length <= 1) return Math.floor(Math.random() * COLORS.length);
+      let idx = Math.floor(Math.random() * (COLORS.length - 1));
+      if (idx >= exclude) idx++;
+      return idx;
     }
 
     function init() {
@@ -1340,7 +1343,7 @@
       activePower = null;
       dragColor = d.color;
       const toRemove = dots.filter(dot => dot.color === d.color);
-      removeDots(toRemove, false, true, false);
+      removeDots(toRemove, false, true, true, d.color);
       showToast('Cleared all ' + COLORS[d.color].name + ' dots.');
       return true;
     }
@@ -1417,7 +1420,7 @@
       removeDots(toRemove, rectangle, true);
     }
 
-    function removeDots(toRemove, rectangle = false, countAsMove = true, refill = true) {
+    function removeDots(toRemove, rectangle = false, countAsMove = true, refill = true, excludeColor = -1) {
       if (gameOver || removing || toRemove.length === 0) return;
       if (countAsMove && !spendMove()) return;
       removing = true;
@@ -1431,13 +1434,13 @@
             if (removeKeys.has(keyOf(r, c))) board[r][c] = null;
           }
         }
-        collapseAndRefill(refill);
+        collapseAndRefill(refill, excludeColor);
         clearSelection();
         removing = false;
       }, 180);
     }
 
-    function collapseAndRefill(refill = true) {
+    function collapseAndRefill(refill = true, excludeColor = -1) {
       for (let c = 0; c < GRID; c++) {
         const survivors = [];
         for (let r = GRID - 1; r >= 0; r--) if (board[r][c]) survivors.push(board[r][c]);
@@ -1447,7 +1450,7 @@
             board[r][c] = null;
             continue;
           }
-          const d = existing || new Dot(r, c, randomColor(), cell * (GRID + 1));
+          const d = existing || new Dot(r, c, randomColor(excludeColor), cell * (GRID + 1));
           d.row = r;
           d.col = c;
           d.popping = false;
